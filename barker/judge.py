@@ -81,15 +81,12 @@ class Judge:
         parts.append(f"New episode starting {ep.start:%A %H:%M:%S}, {ep.duration:.0f}s long, "
                      f"{ep.vocal_seconds} vocal seconds:\n{ep.timeline()}")
 
-        response = self.client.beta.messages.create(
+        response = self.client.messages.create(
             model=MODEL,
-            max_tokens=4000,
+            max_tokens=4000,  # room for thinking, which counts toward it, before the short JSON answer
             system=SYSTEM,
             messages=[{"role": "user", "content": "\n\n".join(parts)}],
             output_config={"effort": "low", "format": {"type": "json_schema", "schema": SCHEMA}},
-            # On a safety decline the API retries on a fallback model it picks; unlikely here, but harmless.
-            betas=["server-side-fallback-2026-07-01"],
-            fallbacks="default",
         )
         if response.stop_reason in ("refusal", "max_tokens"):
             raise ValueError(f"stop_reason {response.stop_reason} (request {response._request_id})")

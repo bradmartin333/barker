@@ -14,7 +14,7 @@ Claude can't take audio as input, so barker turns the sound into text first:
 
 If the Claude API can't be reached, an episode with at least `BARKER_FALLBACK_VOCAL_SECONDS` vocal seconds alerts anyway, so an outage doesn't mean silence.
 
-The model is `claude-opus-5-5` at low effort. Each call is a few thousand tokens at most, and only episodes that pass step 3 make one. Calls go out with the API's server-side refusal fallback (`fallbacks: "default"`). A dog-noise timeline shouldn't ever be declined, but if one were, another model would answer instead of the episode going unjudged.
+The model is `claude-haiku-5-5` at low effort. Each call is a few thousand tokens at most, a fraction of a cent, and only episodes that pass step 3 make one. If Haiku misjudges your dog, set `BARKER_MODEL=claude-sonnet-5-5` or `claude-opus-5-5`.
 
 ## Run it
 
@@ -43,7 +43,7 @@ The healthcheck fails when no audio has arrived for a minute, e.g. when tailcam 
 | `BARKER_QUIET_GAP` | `20` | seconds without vocalising that end an episode |
 | `BARKER_MAX_EPISODE` | `120` | longer episodes are judged in pieces of this many seconds |
 | `BARKER_MIN_VOCAL_SECONDS` | `3` | shorter episodes aren't sent to Claude |
-| `BARKER_MODEL` | `claude-opus-5-5` | |
+| `BARKER_MODEL` | `claude-haiku-5-5` | |
 | `BARKER_CONTEXT` | | free text for Claude about the dog and the room, e.g. `Juno, 3yo lab, crated overnight. Whining around 6am usually means she needs to go out.` |
 | `BARKER_FALLBACK_VOCAL_SECONDS` | `20` | vocal seconds that alert when Claude is unreachable |
 | `BARKER_COOLDOWN` | `900` | minimum seconds between emails |

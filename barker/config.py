@@ -20,7 +20,8 @@ MAX_EPISODE = _float("BARKER_MAX_EPISODE", "120")
 # Episodes with fewer vocal seconds than this (a lone bark, a yip in a dream) never reach Claude.
 MIN_VOCAL_SECONDS = int(os.environ.get("BARKER_MIN_VOCAL_SECONDS", "3"))
 
-MODEL = os.environ.get("BARKER_MODEL", "claude-opus-5-5")
+# Reading a tag timeline is a small classification job, so Haiku: a judged episode costs a fraction of a cent.
+MODEL = os.environ.get("BARKER_MODEL", "claude-haiku-5-5")
 # Free text about the dog and the room, passed to Claude, e.g. "Juno, 3yo lab, crated overnight. Whining around 6am
 # usually means she needs to go out."
 CONTEXT = os.environ.get("BARKER_CONTEXT", "").strip()
