@@ -11,6 +11,13 @@ from scipy.signal import resample_poly
 
 from .yamnet import FRAME, RATE
 
+# Yielded in place of a frame while tailcam refuses the connection: the host is up but tailcam isn't running, which
+# on the Pi means its door sensor has it stopped because the dog isn't in there. That's not a fault.
+OFF = object()
+# Seconds between tries while tailcam is off: soon enough to catch the dog going back in, and well inside the
+# healthcheck's 60 s.
+OFF_RETRY = 15
+
 
 def _resampler(rate):
     """(source samples per frame, function taking them to FRAME samples at RATE)."""
@@ -31,19 +38,31 @@ def _pcm(buf):
 
 def from_url(url, rate):
     """Frames from a raw mono s16le stream, forever. Reconnects when tailcam restarts or the mic goes away, and
-    yields None after each drop so an episode in progress isn't left open across the gap."""
+    yields None after each drop so an episode in progress isn't left open across the gap. While the connection is
+    refused, yields OFF every OFF_RETRY seconds instead."""
     n, convert = _resampler(rate)
     backoff = 5
+    off = False
     while True:
         try:
             with urllib.request.urlopen(url, timeout=30) as resp:
                 print(f"listening to {url}", flush=True)
                 backoff = 5
+                off = False
                 while len(buf := resp.read(2 * n)) == 2 * n:
                     yield convert(_pcm(buf))
             print(f"{url} ended", flush=True)
         except OSError as e:
+            # urlopen wraps connect errors in a URLError, whose reason is the original.
+            if isinstance(getattr(e, "reason", e), ConnectionRefusedError):
+                if not off:  # once, not every OFF_RETRY seconds for as long as the door is open
+                    print(f"{url}: refused, so tailcam is off; trying every {OFF_RETRY}s", flush=True)
+                off = True
+                yield OFF
+                time.sleep(OFF_RETRY)
+                continue
             print(f"{url}: {e}", flush=True)
+        off = False
         yield None
         time.sleep(backoff)
         backoff = min(backoff * 2, 60)

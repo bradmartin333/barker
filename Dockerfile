@@ -9,6 +9,7 @@ RUN python -m barker.yamnet
 
 ENV PYTHONUNBUFFERED=1
 # The heartbeat file is touched for every second of audio received, so a dead or missing mic stream turns the
-# container unhealthy, which the homelab healthcheck reports.
+# container unhealthy, which the homelab healthcheck reports. It's also touched while tailcam refuses the
+# connection, since that means tailcam is switched off on purpose (see stream.OFF).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s CMD python -c "import os, sys, time; sys.exit(time.time() - os.path.getmtime('/tmp/barker-heartbeat') > 60)"
 CMD ["python", "-m", "barker"]

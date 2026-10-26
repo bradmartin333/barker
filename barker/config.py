@@ -5,8 +5,8 @@ def _float(name, default):
     return float(os.environ.get(name, default))
 
 
-# tailcam's /audio/<n>: raw mono s16le PCM. On the homelab's proxy network tailcam answers on its container name,
-# so this skips traefik and the token cookie. A local .wav path works too, for trying out a recording.
+# tailcam's /audio/<n>: raw mono s16le PCM, fetched directly rather than through traefik and the token cookie. The
+# homelab sets this to tailcam on the Pi, over the tailnet. A local .wav path works too, for trying out a recording.
 SOURCE = os.environ.get("BARKER_SOURCE", "http://tailcam:8080/audio/0")
 SOURCE_RATE = int(os.environ.get("BARKER_SOURCE_RATE", "24000"))  # tailcam's AUDIO_RATE
 
@@ -39,6 +39,6 @@ COOLDOWN = _float("BARKER_COOLDOWN", "900")
 
 # If set, every judged episode is saved here (wav + timeline + verdict) for tuning the thresholds.
 CLIP_DIR = os.environ.get("BARKER_CLIP_DIR", "")
-# Touched for every second of audio; the Docker healthcheck fails when it goes stale.
+# Touched for every second of audio, and while tailcam is off; the Docker healthcheck fails when it goes stale.
 HEARTBEAT = os.environ.get("BARKER_HEARTBEAT", "/tmp/barker-heartbeat")
 MODEL_PATH = os.environ.get("BARKER_YAMNET", os.path.join(os.path.dirname(__file__), "yamnet.tflite"))

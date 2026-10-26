@@ -13,8 +13,14 @@ from . import alert
 from .config import CLIP_DIR, COOLDOWN, HEARTBEAT, MIN_VOCAL_SECONDS, SILENCE_DBFS, SOURCE, SOURCE_RATE
 from .episode import STEP, Second, Tracker
 from .judge import Judge
-from .stream import frames
+from .stream import OFF, frames
 from .yamnet import YAMNet
+
+
+def beat():
+    """Touch the heartbeat file; the Docker healthcheck fails once it's a minute stale."""
+    with open(HEARTBEAT, "w"):
+        pass
 
 
 def save_clip(ep, verdict):
@@ -73,11 +79,12 @@ def main():
     # A file is replayed as if it started now, so timestamps still read like a real night.
     t0 = datetime.now().astimezone()
     for i, frame in enumerate(frames(source, SOURCE_RATE)):
-        if frame is None:  # the stream dropped
+        if frame is None or frame is OFF:  # the stream dropped, or tailcam is off
             finished(tracker.flush())
+            if frame is OFF:  # on purpose (see stream.OFF), so still healthy
+                beat()
             continue
-        with open(HEARTBEAT, "w"):
-            pass
+        beat()
         when = datetime.now().astimezone() - timedelta(seconds=STEP) if live else t0 + timedelta(seconds=i * STEP)
         dbfs = 20 * np.log10(np.sqrt(np.mean(frame ** 2)) + 1e-10)
         if dbfs < SILENCE_DBFS:

@@ -18,18 +18,18 @@ The model is `claude-haiku-5-5` at low effort. Each call is a few thousand token
 
 ## Run it
 
-It runs in the homelab next to tailcam, on the same `proxy` network, so `BARKER_SOURCE` can reach `http://tailcam:8080/audio/0` directly without going through traefik. The image is `bradmartin333/barker:latest`, which CI pushes to Docker Hub on every commit to `main`. The YAMNet model is baked into it.
+It runs in the homelab, and tailcam runs on a Pi (`pi-backup`) as a systemd service, so the homelab's compose file points `BARKER_SOURCE` at the Pi's port 8080 over the tailnet. That skips traefik and the token cookie. Point it at whichever camera has the mic you want: the IR camera is `/audio/2` there. The image is `bradmartin333/barker:latest`, which CI pushes to Docker Hub on every commit to `main`. The YAMNet model is baked into it.
 
 ```sh
-docker run -d --name barker --restart unless-stopped --network proxy \
+docker run -d --name barker --restart unless-stopped \
   -e ANTHROPIC_API_KEY -e SMTP_USERNAME -e SMTP_PASSWORD -e SMTP_ALERT_TO \
-  -e TZ=America/New_York \
+  -e BARKER_SOURCE=http://100.69.33.61:8080/audio/2 -e TZ=America/New_York \
   bradmartin333/barker:latest
 ```
 
 Set `TZ` so the timestamps in emails and in what Claude sees are local. Without `SMTP_ALERT_TO`, `SMTP_USERNAME` and `SMTP_PASSWORD`, barker only logs its verdicts (`docker logs barker`), which is a good way to watch what it would have sent while you tune the thresholds.
 
-The healthcheck fails when no audio has arrived for a minute, e.g. when tailcam is down or the camera has no mic.
+The healthcheck fails when no audio has arrived for a minute, e.g. when the Pi is unreachable or the camera has no mic. A refused connection is the exception: the Pi is up but tailcam isn't running, which there means the door sensor has stopped it because the dog isn't in there. barker stays healthy then and tries again every 15 seconds. The catch is that a tailcam crash-looping on the Pi also refuses connections, so barker can't tell that apart from an open door.
 
 ## Configuration
 
