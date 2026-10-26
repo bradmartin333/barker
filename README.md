@@ -68,7 +68,7 @@ classes = ["Bang", "Knock", "Rattle", "Clatter"]
 note = "Pawing at or rattling the crate door. Kept up for tens of seconds, the dog wants out."
 ```
 
-A second is active when any of a trigger's classes scores at least its threshold. The class names must match YAMNet's 521 labels exactly (`unzip -p barker/yamnet.tflite yamnet_label_list.txt`); barker refuses to start on one it doesn't know. The note goes to Claude, so use it to say what the sound means for this dog and when it isn't fussing. The file is read at startup, so restart barker after editing it.
+A second is active when any of a trigger's classes scores at least its threshold. The class names must match YAMNet's 521 labels exactly (`unzip -p barker/yamnet.tflite yamnet_label_list.txt`); barker refuses to start on one it doesn't know. The note goes to Claude, so use it to say what the sound means for this dog, when it isn't fussing, and how readily to alert. For seconds of its own kind, a note takes precedence over Claude's default caution and its list of sounds that are normally fine (settling in, snoring, panting), but people, TV, music and traffic never alert whatever it says. The file is read at startup, so restart barker after editing it.
 
 ## Tuning
 
@@ -81,7 +81,7 @@ ssh brad@pi-backup 'ffmpeg -loglevel error -f s16le -ar 24000 -ac 1 -i http://lo
 
 Pick the classes that score high while the sound is happening, and a threshold below their usual scores there but above what they score the rest of the time.
 
-Then run it for a few nights with `BARKER_CLIP_DIR` set and email off, and listen to the saved clips next to their verdicts. Lower a trigger's threshold if its sound is missed entirely (it never shows up in the logs). Raise `BARKER_MIN_SECONDS` if too many trivial episodes reach Claude. Use `BARKER_CONTEXT` and the triggers' notes to tell Claude what's normal for this dog.
+Then run it for a few nights with `BARKER_CLIP_DIR` set and email off, and listen to the saved clips next to their verdicts. Lower a trigger's threshold if its sound is missed entirely (it never shows up in the logs). Raise `BARKER_MIN_SECONDS` if too many trivial episodes reach Claude. Use `BARKER_CONTEXT` and the triggers' notes to tell Claude what's normal for this dog and how readily to alert; both take precedence over its default caution.
 
 ## Local dev
 

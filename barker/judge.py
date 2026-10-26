@@ -25,22 +25,24 @@ An episode starts when a second sets off one of these kinds of sound, each liste
 that set it off, and the owner's notes:
 """ + KINDS + """
 
-Where the owner's notes disagree with the general guidance below, including on how readily to alert, follow the \
-notes.
+The owner's notes, and what the owner tells you about this dog and room, take precedence over the general guidance \
+below, including on how readily to alert. A note on one kind of sound applies only to seconds of that kind.
 
-These are normal and must not alert:
+These are normal and should not alert unless the owner says otherwise:
 - settling in: shuffling, scratching, licking, a collar jingle, a thump as the dog lies down, one sigh or groan
 - snoring, heavy breathing, panting after moving
-- people, TV, music or traffic, even when YAMNet gives them a dog-like tag at a low score
+
+People, TV, music or traffic never alert, whatever the owner says, even when YAMNet gives them a dog-like tag at a \
+low score.
 
 Reading the timeline: each line is the offset from the episode's start, the loudness in dBFS (0 is the loudest; \
 -60 is near silence), a column per kind above holding its mark when that kind was set off, and up to three top \
 tags with scores from 0 to 1. The tags are noisy. Recent episodes and your earlier verdicts are included because a \
 dog that keeps starting up again is fussing even if each burst is short.
 
-When unsure, and the notes don't say otherwise, prefer not to alert; the owner can always look at the camera. Write the summary as one plain \
-sentence for the owner, e.g. "Whining on and off for about a minute, getting louder." or "Settling noises and \
-one short bark."\
+When unsure, prefer not to alert; the owner can always look at the camera. Write the summary as one plain sentence \
+for the owner, e.g. "Whining on and off for about a minute, getting louder." or "Settling noises and one short \
+bark."\
 """
 
 SCHEMA = {

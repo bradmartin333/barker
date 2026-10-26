@@ -7,7 +7,8 @@
 #   threshold  score (0-1) at which a second counts; YAMNet scores classes independently, not as a share of 1
 #   classes    YAMNet class names, spelled exactly as in its label list:
 #              unzip -p barker/yamnet.tflite yamnet_label_list.txt
-#   note       optional: tells Claude what this kind sounds like and when it means fussing
+#   note       optional: tells Claude what this kind sounds like and when it means fussing; for seconds of this
+#              kind it takes precedence over Claude's default caution, except that people and TV never alert
 
 [[trigger]]
 name = "dog noise"
