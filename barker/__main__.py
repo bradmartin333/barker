@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 import numpy as np
 
 from . import alert
-from .config import CLIP_DIR, COOLDOWN, HEARTBEAT, MIN_VOCAL_SECONDS, SILENCE_DBFS, SOURCE, SOURCE_RATE
+from .config import CLIP_DIR, COOLDOWN, HEARTBEAT, MIN_SECONDS, SILENCE_DBFS, SOURCE, SOURCE_RATE
 from .episode import STEP, Second, Tracker
 from .judge import Judge
 from .stream import OFF, frames
@@ -39,7 +39,7 @@ def judge_episodes(episodes):
     while True:
         ep = episodes.get()
         verdict = judge(ep)
-        print(f"{ep.start:%H:%M:%S} {ep.duration:.0f}s {ep.vocal_seconds} vocal -> "
+        print(f"{ep.start:%H:%M:%S} {ep.duration:.0f}s {ep.tally()} -> "
               f"{'FUSSY' if verdict.fussy else 'fine'} ({verdict.confidence}, {verdict.by}): {verdict.summary}",
               flush=True)
         if CLIP_DIR:
@@ -58,21 +58,26 @@ def judge_episodes(episodes):
 
 
 def main():
-    source = sys.argv[1] if len(sys.argv) > 1 else SOURCE
+    args = sys.argv[1:]
+    # --tags prints each second's line of the timeline and judges nothing, to see what a recording sounds like to
+    # YAMNet while choosing a trigger's classes and threshold.
+    tags = "--tags" in args
+    args = [a for a in args if a != "--tags"]
+    source = args[0] if args else SOURCE
     live = not os.path.exists(source)
     yamnet = YAMNet()
     tracker = Tracker()
     episodes = queue.Queue()
-    threading.Thread(target=judge_episodes, args=(episodes,), daemon=True).start()
-    if not alert.ENABLED:
-        print("SMTP_ALERT_TO, SMTP_USERNAME or SMTP_PASSWORD unset: logging verdicts only", flush=True)
+    if not tags:
+        threading.Thread(target=judge_episodes, args=(episodes,), daemon=True).start()
+        if not alert.ENABLED:
+            print("SMTP_ALERT_TO, SMTP_USERNAME or SMTP_PASSWORD unset: logging verdicts only", flush=True)
 
     def finished(ep):
-        if ep is None:
+        if ep is None or tags:
             return
-        if ep.vocal_seconds < MIN_VOCAL_SECONDS:
-            print(f"{ep.start:%H:%M:%S} {ep.duration:.0f}s {ep.vocal_seconds} vocal -> too brief, not judged",
-                  flush=True)
+        if ep.active_seconds < MIN_SECONDS:
+            print(f"{ep.start:%H:%M:%S} {ep.duration:.0f}s {ep.tally()} -> too brief, not judged", flush=True)
         else:
             episodes.put(ep)
 
@@ -88,10 +93,13 @@ def main():
         when = datetime.now().astimezone() - timedelta(seconds=STEP) if live else t0 + timedelta(seconds=i * STEP)
         dbfs = 20 * np.log10(np.sqrt(np.mean(frame ** 2)) + 1e-10)
         if dbfs < SILENCE_DBFS:
-            second = Second(float(dbfs), 0.0, [])
+            second = Second(float(dbfs), [])
         else:
             scores = yamnet.scores(frame)
-            second = Second(float(dbfs), yamnet.vocal_score(scores), yamnet.top(scores))
+            second = Second(float(dbfs), yamnet.top(scores), yamnet.hits(scores))
+        if tags:
+            print(second.line(i * STEP), flush=True)
+            continue
         finished(tracker.push(when, frame, second))
     finished(tracker.flush())
     episodes.join()

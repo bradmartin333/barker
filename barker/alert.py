@@ -15,7 +15,7 @@ def send(ep, verdict):
     msg["To"] = SMTP_ALERT_TO
     msg.set_content(
         f"{verdict.summary}\n\n"
-        f"Started {ep.start:%a %H:%M:%S}, {ep.duration:.0f} seconds, {ep.vocal_seconds} of them dog noise. "
+        f"Started {ep.start:%a %H:%M:%S}, {ep.duration:.0f} seconds ({ep.tally()}). "
         f"Judged by {verdict.by}, {verdict.confidence} confidence. The clip is attached.\n\n"
         f"{ep.timeline()}\n"
     )

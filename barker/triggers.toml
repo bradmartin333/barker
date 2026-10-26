@@ -1,0 +1,38 @@
+# What barker listens for. Each [[trigger]] is a kind of sound: a second of audio counts as that kind when any of
+# its classes scores at least its threshold. The first such second starts an episode, and Claude judges the episode
+# from YAMNet's tags. Read once at startup, so restart barker after editing; BARKER_TRIGGERS points at another copy.
+#
+#   name       what the kind is called in logs, emails and what Claude reads
+#   mark       one character, shown in the timeline on each second of this kind
+#   threshold  score (0-1) at which a second counts; YAMNet scores classes independently, not as a share of 1
+#   classes    YAMNet class names, spelled exactly as in its label list:
+#              unzip -p barker/yamnet.tflite yamnet_label_list.txt
+#   note       optional: tells Claude what this kind sounds like and when it means fussing
+
+[[trigger]]
+name = "dog noise"
+mark = "*"
+threshold = 0.3
+# The specific classes score low on this model: a puppy whining gets "Dog" at 0.5-0.75 but "Whimper (dog)" only
+# around 0.1, so "Dog" itself has to count. Plain Whimper and Crying catch whines the dog-specific class misses.
+classes = ["Dog", "Bark", "Yip", "Howl", "Bow-wow", "Growling", "Whimper (dog)", "Whimper", "Crying, sobbing"]
+note = """
+Sustained or repeated whining, whimpering, crying, barking, yipping or howling is fussing. A single bark, yip or
+whimper on its own is not, including the short muffled noises of a dog dreaming. A lone low-scoring "Whimper" among
+rustles is probably a squeak, while many seconds of "Whimper (dog)" or "Crying, sobbing" at 0.5 and above are
+whining.
+"""
+
+[[trigger]]
+name = "banging"
+mark = "#"
+# A guess until checked against a recording of the real crate: see "Tuning" in the README.
+threshold = 0.25
+# Not Scratch or Rub, which a dog scratching itself or settling makes all the time. They still show in the tags once
+# an episode is running.
+classes = ["Bang", "Knock", "Tap", "Thump, thud", "Whack, thwack", "Clang", "Clatter", "Rattle", "Chink, clink",
+           "Door", "Slam"]
+note = """
+Pawing at, butting or rattling the crate door. Kept up or repeated over tens of seconds, it means the dog wants out,
+which is fussing. One thump as the dog lies down or turns over is not.
+"""
