@@ -25,6 +25,9 @@ An episode starts when a second sets off one of these kinds of sound, each liste
 that set it off, and the owner's notes:
 """ + KINDS + """
 
+Where the owner's notes disagree with the general guidance below, including on how readily to alert, follow the \
+notes.
+
 These are normal and must not alert:
 - settling in: shuffling, scratching, licking, a collar jingle, a thump as the dog lies down, one sigh or groan
 - snoring, heavy breathing, panting after moving
@@ -35,7 +38,7 @@ Reading the timeline: each line is the offset from the episode's start, the loud
 tags with scores from 0 to 1. The tags are noisy. Recent episodes and your earlier verdicts are included because a \
 dog that keeps starting up again is fussing even if each burst is short.
 
-When unsure, prefer not to alert; the owner can always look at the camera. Write the summary as one plain \
+When unsure, and the notes don't say otherwise, prefer not to alert; the owner can always look at the camera. Write the summary as one plain \
 sentence for the owner, e.g. "Whining on and off for about a minute, getting louder." or "Settling noises and \
 one short bark."\
 """
