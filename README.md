@@ -21,11 +21,14 @@ The model is `claude-haiku-5-5` at low effort. Each call is a few thousand token
 It runs in the homelab, and tailcam runs on a Pi (`pi-backup`) as a systemd service, so the homelab's compose file points `BARKER_SOURCE` at the Pi's port 8080 over the tailnet. That skips traefik and the token cookie. Point it at whichever camera has the mic you want: the IR camera is `/audio/2` there. The image is `bradmartin333/barker:latest`, which CI pushes to Docker Hub on every commit to `main`. The YAMNet model is baked into it.
 
 ```sh
-docker run -d --name barker --restart unless-stopped \
+docker run -d --name barker --restart unless-stopped --read-only --tmpfs /tmp \
   -e ANTHROPIC_API_KEY -e SMTP_USERNAME -e SMTP_PASSWORD -e SMTP_ALERT_TO \
   -e BARKER_SOURCE=http://100.69.33.61:8080/audio/2 -e TZ=America/New_York \
+  -v ./triggers.toml:/etc/barker/triggers.toml:ro -e BARKER_TRIGGERS=/etc/barker/triggers.toml \
   bradmartin333/barker:latest
 ```
+
+Leave out the `-v` and `BARKER_TRIGGERS` lines to use the [triggers file](#triggers) baked into the image. barker keeps nothing on disk: the alert's `.wav` is built in memory, and only `BARKER_CLIP_DIR` saves clips. `--read-only` holds it to that, and `/tmp` only holds the healthcheck's empty heartbeat file.
 
 Set `TZ` so the timestamps in emails and in what Claude sees are local. Without `SMTP_ALERT_TO`, `SMTP_USERNAME` and `SMTP_PASSWORD`, barker only logs its verdicts (`docker logs barker`), which is a good way to watch what it would have sent while you tune the thresholds.
 
@@ -49,7 +52,7 @@ The healthcheck fails when no audio has arrived for a minute, e.g. when the Pi i
 | `BARKER_COOLDOWN` | `900` | minimum seconds between emails |
 | `BARKER_CLIP_DIR` | | if set, every judged episode is saved here as `.wav` and `.txt` (timeline and verdict) |
 | `SMTP_USERNAME`, `SMTP_PASSWORD` | | Gmail login (the homelab's `smtp/.env`) |
-| `SMTP_ALERT_TO` | | where alerts go |
+| `SMTP_ALERT_TO` | | where alerts go; separate several addresses with commas |
 | `SMTP_HOST`, `SMTP_PORT` | `smtp.gmail.com`, `587` | STARTTLS |
 
 ## Triggers
@@ -69,7 +72,7 @@ A second is active when any of a trigger's classes scores at least its threshold
 
 ## Tuning
 
-Before adding a trigger or trusting its threshold, see what YAMNet makes of the real sound. Record a minute of it from tailcam, e.g. while the dog paws at the crate door, then replay it with `--tags`, which prints every second's tags and the triggers it set off without judging anything:
+Before adding a trigger or trusting its threshold, see what YAMNet makes of the real sound. Record a minute of it from tailcam, e.g. while the dog paws at the crate door, then replay it with `--tags`, which prints every second's tags and the triggers it set off without judging anything, so it needs no API key:
 
 ```sh
 ssh brad@pi-backup 'ffmpeg -loglevel error -f s16le -ar 24000 -ac 1 -i http://localhost:8080/audio/2 -t 60 -f wav -' > paw.wav
@@ -83,9 +86,9 @@ Then run it for a few nights with `BARKER_CLIP_DIR` set and email off, and liste
 ## Local dev
 
 ```sh
-./run.sh path/to/recording.wav     # replay a 16-bit .wav through the whole pipeline, then exit
+./run.sh path/to/recording.wav         # replay a 16-bit .wav through the whole pipeline, then exit
 ./run.sh --tags path/to/recording.wav  # print each second's tags and triggers, judging nothing
-./run.sh                           # listen to BARKER_SOURCE
+./run.sh                               # listen to BARKER_SOURCE
 ```
 
 `run.sh` loads settings from a `.env` beside it. The first run downloads the YAMNet model (4 MB, checksummed) to `barker/yamnet.tflite`.
